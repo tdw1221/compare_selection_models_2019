@@ -67,11 +67,11 @@ def olga2adaptive(olga_tsv):
 # set seeds for reproducibility
 np.random.seed(42)
 rn.seed(12345)
-session_conf = tf.ConfigProto(intra_op_parallelism_threads=1,
+session_conf = tf.compat.v1.ConfigProto(intra_op_parallelism_threads=1,
                               inter_op_parallelism_threads=1)
-tf.set_random_seed(1234)
-sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-K.set_session(sess)
+tf.random.set_seed(1234)
+sess = tf.compat.v1.Session(graph=tf.compat.v1.get_default_graph(), config=session_conf)
+tf.compat.v1.keras.backend.set_session(sess)
     
 #load data
 data=pd.read_csv('sampled_data/deneuter_data.csv')

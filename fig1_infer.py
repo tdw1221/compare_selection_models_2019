@@ -15,40 +15,44 @@ import random as rn
 # set seeds for reproducibility
 np.random.seed(42)
 rn.seed(12345)
-session_conf = tf.ConfigProto(intra_op_parallelism_threads=1,
-                              inter_op_parallelism_threads=1)
-tf.set_random_seed(1234)
-sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-K.set_session(sess)
+session_conf = tf.compat.v1.ConfigProto(intra_op_parallelism_threads=1,inter_op_parallelism_threads=1)
+tf.random.set_seed(1234)
+sess = tf.compat.v1.Session(graph=tf.compat.v1.get_default_graph(), config=session_conf)
+tf.compat.v1.keras.backend.set_session(sess)
  
 #load 1M sequences
-data=list(pd.read_csv('vampire-emerson/2019-03-18-freq-1M-train/count/basic/training-sequences.olga.tsv',
-                      sep='\t',header=None).sample(frac=1).reset_index(drop=True).values)
+data=list(pd.read_csv('vampire-emerson/2019-03-18-freq-1M-train/count/basic/training-sequences.olga.tsv',sep='\t',header=None).sample(frac=1).reset_index(drop=True).values)
 gen=list(pd.read_csv('sampled_data/generated_sequences.csv').values.astype(np.str))
 print len(gen),len(data)
 
 #define and train model
+##positional length model
 qm = SoniaLengthPos(data_seqs=data,gen_seqs=gen,custom_pgen_model='universal_model')
 qm.infer_selection(epochs=50,batch_size=int(1e4),validation_split=0.01)
 
 #save model
 qm.save_model('selection_models/emerson_frequency_lengthpos_1M')
 
+
+
+##left right model
 qm = SoniaLeftposRightpos(data_seqs=data,gen_seqs=gen,custom_pgen_model='universal_model')
 qm.infer_selection(epochs=50,batch_size=int(1e4),validation_split=0.01)
 
 #save model
 qm.save_model('selection_models/emerson_frequency_leftright_1M')
 
+
+####vjl model
 qm = SoniaVJL(data_seqs=data,gen_seqs=gen,custom_pgen_model='universal_model')
 qm.infer_selection()
 
 qm.save_model('selection_models/emerson_frequency_vjl_1M',attributes_to_save = ['model', 'data_seqs', 'gen_seqs'])
 
-data=list(pd.read_csv('vampire-emerson/2019-03-15-freq-in-ms/count/basic/training-sequences.olga.tsv',
-                      sep='\t',header=None).sample(frac=1).reset_index(drop=True).values)
+data=list(pd.read_csv('vampire-emerson/2019-03-15-freq-in-ms/count/basic/training-sequences.olga.tsv',sep='\t',header=None).sample(frac=1).reset_index(drop=True).values)
 
 #define and train model
+###length positional model, 2M
 qm = SoniaLengthPos(data_seqs=data,gen_seqs=gen,custom_pgen_model='universal_model')
 qm.infer_selection(epochs=50,batch_size=int(1e4),validation_split=0.01)
 
@@ -56,12 +60,14 @@ qm.infer_selection(epochs=50,batch_size=int(1e4),validation_split=0.01)
 qm.save_model('selection_models/emerson_frequency_lengthpos_0_2M')
 
 #define and train model
+##left right model 2M
 qm = SoniaLeftposRightpos(data_seqs=data,gen_seqs=gen,custom_pgen_model='universal_model')
 qm.infer_selection(epochs=50,batch_size=int(1e4),validation_split=0.01)
 
 #save model
 qm.save_model('selection_models/emerson_frequency_leftright_0_2M')
 
+#VJL model 2M
 qm = SoniaVJL(data_seqs=data,gen_seqs=gen,custom_pgen_model='universal_model')
 qm.infer_selection()
 

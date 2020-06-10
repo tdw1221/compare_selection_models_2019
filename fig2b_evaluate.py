@@ -12,3 +12,4 @@ x=run_terminal('tcr-vae pvae '+params+data2)
 print(x[1])
 stop = timeit.default_timer()
 print ('Time', stop- start)
+

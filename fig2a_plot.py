@@ -18,20 +18,25 @@ import random as rn
 import os
 import olga.load_model as olga_load_model
 import olga.generation_probability as generation_probability
-import process_adaptive as pa
+#import process_adaptive as pa
 # set seeds for reproducibility
 np.random.seed(42)
 rn.seed(12345)
-session_conf = tf.ConfigProto(intra_op_parallelism_threads=1,
-                              inter_op_parallelism_threads=1)
-tf.set_random_seed(1234)
-sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-K.set_session(sess)
+
+session_conf = tf.compat.v1.ConfigProto(intra_op_parallelism_threads=1,inter_op_parallelism_threads=1)
+tf.random.set_seed(1234)
+sess = tf.compat.v1.Session(graph=tf.compat.v1.get_default_graph(), config=session_conf)
+tf.compat.v1.keras.backend.set_session(sess)
 
 def rewrite_gene(seq):
     # map from adaptive naming to olga naming
     x=seq.split('-')
     return 'TRB'+seq[4]+str(int(x[0][-2:]))+'-'+str(int(x[1]))
+
+def adaptive2olga(adaptive_csv):
+    if isinstance(adaptive_csv, pd.DataFrame):df=adaptive_csv
+    else: df = pd.read_csv(adaptive_csv, usecols=['amino_acid', 'v_gene', 'j_gene'])
+    return convert_and_filter(df, adaptive_to_olga_dict())
 
 #load model
 qmlr = SoniaLeftposRightpos(load_dir='selection_models/deneuter_model_leftright',custom_pgen_model='deneuter_model')
@@ -58,7 +63,7 @@ _,_,ppost_sonialr=ev.evaluate_seqs(list(sonia_seqs.values))
 
 #evalute vae
 data='input/_output_deneuter-2019-02-07/deneuter-2019-02-07.train/0.75/basic/vae-generated.csv'
-seqs=pa.adaptive2olga(pd.read_csv(data))
+seqs=adaptive2olga(pd.read_csv(data))
 _,_,ppost_basic=ev.evaluate_seqs(list(seqs.values))
 
 #evalute data
@@ -69,10 +74,10 @@ data_name=[d+'.head.csv' for d in datasets]
 pposts=[]
 for i in range(len(datasets)):
     print i,
-    seqs=list(pa.adaptive2olga(pd.read_csv(folder+datasets[i]+'/'+data_name[i])).values)
+    seqs=list(adaptive2olga(pd.read_csv(folder+datasets[i]+'/'+data_name[i])).values)
     pposts.append(ev.evaluate_seqs(seqs)[2])
     
-    
+
 plt.figure(figsize=(8,8),dpi=300)
 n_bins=35
 binning_=np.linspace(-20,-5,n_bins)

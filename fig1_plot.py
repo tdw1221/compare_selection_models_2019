@@ -7,29 +7,31 @@ from SONIA.sonia_vjl import SoniaVJL
 from scipy import stats
 import matplotlib.pyplot as plt
 import re
-import keras.backend as K
+#import keras.backend as K
 import tensorflow as tf
 import random as rn
 import olga.load_model as olga_load_model
 import olga.generation_probability as generation_probability
 import os
 from SONIA.evaluate_model import compute_all_pgens
-
+from keras import backend as K
 # set seeds for reproducibility
 np.random.seed(42)
 rn.seed(12345)
-session_conf = tf.ConfigProto(intra_op_parallelism_threads=1,
-                              inter_op_parallelism_threads=1)
-tf.set_random_seed(1234)
-sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-K.set_session(sess)
-
+#session_conf = tf.ConfigProto(intra_op_parallelism_threads=1,inter_op_parallelism_threads=1)
+session_conf = tf.compat.v1.ConfigProto(intra_op_parallelism_threads=1,inter_op_parallelism_threads=1)
+#tf.set_random_seed(1234)
+tf.random.set_seed(1234)
+sess = tf.compat.v1.Session(graph=tf.compat.v1.get_default_graph(), config=session_conf)
+#K.set_session(sess)
+tf.compat.v1.keras.backend.set_session(sess)
 print 'ANALYSE case 1M sequences'
 
 df=pd.read_csv('vampire-emerson/2019-03-18-freq-1M-train/count/basic/test_data.csv',sep=',')
 to_evalutate=list(df[['amino_acid','v_gene','j_gene']].values)
 
 #define model
+##another way of initializating a SONIA lengthpos/ SONIA left right model is by loading the whole dir
 qm = SoniaLengthPos(load_dir='selection_models/emerson_frequency_lengthpos_1M',custom_pgen_model='universal_model')
 qm0 =SoniaLeftposRightpos(load_dir='selection_models/emerson_frequency_leftright_1M',custom_pgen_model='universal_model')
 qm1 = SoniaVJL(load_dir='selection_models/emerson_frequency_vjl_1M',custom_pgen_model='universal_model')
@@ -80,6 +82,10 @@ print 'DKL psonia leftright',np.mean(df.log_freq.values[sel]-np.log(np.array(ppo
 
 print 'ANALYSE case 2e5 sequences'
 
+
+
+
+###read another batch of data
 df=pd.read_csv('vampire-emerson/2019-03-15-freq-in-ms/count/basic/test_data.csv',sep=',')
 to_evalutate=list(df[['amino_acid','v_gene','j_gene']].values)
 
@@ -149,8 +155,7 @@ ax1.set_ylim([-11,-3])
 ax1.set_xlim([-7.5,-3.5])
 ax1.locator_params(nbins=4)
 ax1.plot([-20,0],[-20,0],c='k')
-legend_elements = [Line2D([0], [0], marker='o', color='w', label='SONIA',
-                          markerfacecolor='w', markersize=0)]
+legend_elements = [Line2D([0], [0], marker='o', color='w', label='SONIA',markerfacecolor='w', markersize=0)]
 ax1.legend(handles=legend_elements,fontsize=20,handletextpad=-2.0)
 ax1.set_xticklabels([-8,-7,-6,-5,-4],fontsize=20)
 ax1.set_yticklabels([-12,-10,-8,-6,-4],fontsize=20)
